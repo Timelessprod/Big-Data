@@ -7,14 +7,15 @@ from pyspark.ml.stat import Correlation
 from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.types import TimestampType, DoubleType, LongType, \
         StringType, StructField, StructType
-from pyspark.sql.functions import isnan, when, count
+from pyspark.sql.functions import isnan, when, count, datediff, mean, lag
+from pyspark.sql.window import Window
 
 
 def create_spark_session(name: str) -> SparkSession:
     """
     Create a spark session using the <name>
     """
-    return (SparkSession.builder.appName(name).getOrCreate())
+    return SparkSession.builder.appName(name).getOrCreate()
 
 
 def load_data(spark_session: SparkSession, path: str) -> DataFrame:
@@ -43,6 +44,15 @@ def count_nan(data_frame: DataFrame) -> DataFrame:
                 for c
                 in ["High", "Low", "Open", "Close", "Volume", "Adj Close"]
               ])
+
+
+def duration_between_rows(df: DataFrame):
+    df = df.orderBy('Date')
+    df = df.withColumn('duration',
+                       datediff(df['Date'],
+                                lag(df['Date'], 1).over(Window.partitionBy("company_name").orderBy('Date')))
+                       )
+    return df.select(mean('duration')).collect()[0][0]
 
 
 def corr_two_columns(data_frame: DataFrame, col1: str, col2: str) -> float:
@@ -75,6 +85,8 @@ if __name__ == "__main__":
 
     df.printSchema()
     df.show(40)
+    df.count()
+    print(duration_between_rows(df))
 
     # Descriptive statistics for each dataframe and each column (min, max,
     # standard deviation)
