@@ -4,7 +4,7 @@ load dataframe from a csv
 from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.types import TimestampType, DoubleType, LongType, \
         StringType, StructField, StructType
-from pyspark.sql.functions import isnan, when, count, datediff
+from pyspark.sql.functions import isnan, when, count, datediff, mean, lag
 from pyspark.sql.window import Window
 
 
@@ -12,7 +12,7 @@ def create_spark_session(name: str) -> SparkSession:
     """
     Create a spark session using the <name>
     """
-    return (SparkSession.builder.appName(name).getOrCreate())
+    return SparkSession.builder.appName(name).getOrCreate()
 
 
 def load_data(spark_session: SparkSession, path: str) -> DataFrame:
