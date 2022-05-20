@@ -36,3 +36,5 @@ if __name__ == "__main__":
 
     df.printSchema()
     df.show(40)
+
+    df.describe().show()
