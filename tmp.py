@@ -3,11 +3,11 @@ from pyspark.sql.types import *
 
 
 def create_spark_session(name: str) -> SparkSession:
-    return (SparkSession.builder.appName(name).getOrCreate())
+    return SparkSession.builder.appName(name).getOrCreate()
 
 
 def load_data(path: str) -> DataFrame:
-    devSchema = StructType([
+    dev_schema = StructType([
         StructField("Date", TimestampType()),
         StructField("High", DoubleType()),
         StructField("Low", DoubleType()),
@@ -17,7 +17,7 @@ def load_data(path: str) -> DataFrame:
         StructField("Adj Close", DoubleType()),
         StructField("company_name", StringType()),
     ])
-    return spark.read.csv(path, devSchema, header = True)
+    return spark.read.csv(path, dev_schema, header=True)
 
 
 if __name__ == "__main__":
