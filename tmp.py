@@ -1,9 +1,10 @@
 from pyspark.sql import SparkSession, DataFrame
-import pandas as pd
 from pyspark.sql.types import *
+
 
 def create_spark_session(name: str) -> SparkSession:
     return (SparkSession.builder.appName(name).getOrCreate())
+
 
 def load_data(path: str) -> DataFrame:
     devSchema = StructType([
