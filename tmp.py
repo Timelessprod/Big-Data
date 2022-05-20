@@ -14,7 +14,7 @@ def create_spark_session(name: str) -> SparkSession:
     return (SparkSession.builder.appName(name).getOrCreate())
 
 
-def load_data(path: str) -> DataFrame:
+def load_data(spark_session: SparkSession, path: str) -> DataFrame:
     """
     Create spark dataframe from the csv file at <path>
     """
@@ -28,7 +28,7 @@ def load_data(path: str) -> DataFrame:
         StructField("Adj Close", DoubleType()),
         StructField("company_name", StringType()),
     ])
-    return spark.read.csv(path, dev_schema, header=True)
+    return spark_session.read.csv(path, dev_schema, header=True)
 
 
 def count_nan(data_frame: DataFrame) -> DataFrame:
@@ -44,7 +44,7 @@ def count_nan(data_frame: DataFrame) -> DataFrame:
 
 if __name__ == "__main__":
     spark = create_spark_session("Spark_Application_Name")
-    df = load_data('stocks_data/AMAZON.csv')
+    df = load_data(spark, 'stocks_data/AMAZON.csv')
 
     df.printSchema()
     df.show(40)
