@@ -1,15 +1,24 @@
-import pyspark
+"""
+load dataframe from a csv
+"""
 from pyspark.sql import SparkSession, DataFrame
-from pyspark.sql.types import *
-from pyspark.sql.functions import *
+from pyspark.sql.types import TimestampType, DoubleType, LongType, \
+        StringType, StructField, StructType
+from pyspark.sql.functions import isnan, when, count, datediff
 from pyspark.sql.window import Window
 
 
 def create_spark_session(name: str) -> SparkSession:
-    return SparkSession.builder.appName(name).getOrCreate()
+    """
+    Create a spark session using the <name>
+    """
+    return (SparkSession.builder.appName(name).getOrCreate())
 
 
-def load_data(path: str) -> DataFrame:
+def load_data(spark_session: SparkSession, path: str) -> DataFrame:
+    """
+    Create spark dataframe from the csv file at <path>
+    """
     dev_schema = StructType([
         StructField("Date", TimestampType()),
         StructField("High", DoubleType()),
@@ -20,7 +29,18 @@ def load_data(path: str) -> DataFrame:
         StructField("Adj Close", DoubleType()),
         StructField("company_name", StringType()),
     ])
-    return spark.read.csv(path, dev_schema, header=True)
+    return spark_session.read.csv(path, dev_schema, header=True)
+
+
+def count_nan(data_frame: DataFrame) -> DataFrame:
+    """
+    Count nan in the <df> DataFrame
+    """
+    return data_frame.select([
+                count(when(isnan(c), c)).alias(c)
+                for c
+                in ["High", "Low", "Open", "Close", "Volume", "Adj Close"]
+              ])
 
 
 def duration_between_rows(df: DataFrame):
@@ -34,9 +54,16 @@ def duration_between_rows(df: DataFrame):
 
 if __name__ == "__main__":
     spark = create_spark_session("Spark_Application_Name")
-    df = load_data('stocks_data/AMAZON.csv')
+    df = load_data(spark, 'stocks_data/AMAZON.csv')
 
     df.printSchema()
     df.show(40)
     df.count()
     print(duration_between_rows(df))
+
+    # Descriptive statistics for each dataframe and each column (min, max,
+    # standard deviation)
+    df.describe().show()
+
+    # Number of missing values for each dataframe and column
+    count_nan(df).show()
