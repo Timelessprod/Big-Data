@@ -1,13 +1,23 @@
+"""
+load dataframe from a csv
+"""
 from pyspark.sql import SparkSession, DataFrame
-from pyspark.sql.types import *
+from pyspark.sql.types import TimestampType, DoubleType, LongType, \
+        StringType, StructField, StructType
 
 
 def create_spark_session(name: str) -> SparkSession:
+    """
+    Create a spark session using the <name>
+    """
     return (SparkSession.builder.appName(name).getOrCreate())
 
 
 def load_data(path: str) -> DataFrame:
-    devSchema = StructType([
+    """
+    Create spark dataframe from the csv file at <path>
+    """
+    dev_schema = StructType([
         StructField("Date", TimestampType()),
         StructField("High", DoubleType()),
         StructField("Low", DoubleType()),
@@ -17,7 +27,7 @@ def load_data(path: str) -> DataFrame:
         StructField("Adj Close", DoubleType()),
         StructField("company_name", StringType()),
     ])
-    return spark.read.csv(path, devSchema, header = True)
+    return spark.read.csv(path, dev_schema, header=True)
 
 
 if __name__ == "__main__":
