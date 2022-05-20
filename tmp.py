@@ -1,6 +1,9 @@
 """
 load dataframe from a csv
 """
+from pyspark.ml.linalg import DenseMatrix
+from pyspark.ml.feature import VectorAssembler
+from pyspark.ml.stat import Correlation
 from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.types import TimestampType, DoubleType, LongType, \
         StringType, StructField, StructType
@@ -42,6 +45,30 @@ def count_nan(data_frame: DataFrame) -> DataFrame:
               ])
 
 
+def corr_two_columns(data_frame: DataFrame, col1: str, col2: str) -> float:
+    """
+    Return the correlation between two columns of the dataframe
+    """
+    return data_frame.stat.corr(col1, col2)
+
+
+def corr_matrix(data_frame: DataFrame) -> DenseMatrix:
+    """
+    Return the correlation matrix of a dataframe
+    """
+
+    vector_col = "corr_features"
+    assembler = VectorAssembler(
+            inputCols=["High", "Low", "Open", "Close", "Volume", "Adj Close"],
+            outputCol=vector_col
+    )
+    df_vector = assembler.transform(data_frame).select(vector_col)
+
+    matrix = Correlation.corr(df_vector, vector_col).collect()[0][0]
+
+    return matrix
+
+
 if __name__ == "__main__":
     spark = create_spark_session("Spark_Application_Name")
     df = load_data(spark, 'stocks_data/AMAZON.csv')
@@ -55,3 +82,8 @@ if __name__ == "__main__":
 
     # Number of missing values for each dataframe and column
     count_nan(df).show()
+
+    # Correlation between values
+    pearsonCorr = corr_two_columns(df, "High", "Low")
+    corr = corr_matrix(df)
+    print(corr)
