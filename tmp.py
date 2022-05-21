@@ -7,7 +7,8 @@ from pyspark.ml.stat import Correlation
 from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.types import TimestampType, DoubleType, StringType, \
         StructField, StructType
-from pyspark.sql.functions import isnan, when, count, datediff, mean, lag, col
+from pyspark.sql.functions import isnan, when, count, datediff, mean, lag, \
+        col, month, year
 from pyspark.sql.window import Window
 
 
@@ -118,6 +119,14 @@ def describe_data_frame(data_frame: DataFrame):
     print(corr, '\n')
 
 
+def month_mean(data_frame: DataFrame) -> DataFrame:
+    return data_frame.withColumn("Year", year("Date")) \
+            .withColumn("Month", month("Date")) \
+            .groupBy("Year", "Month") \
+            .avg("Open", "Close") \
+            .orderBy(["Year", "Month"])
+
+
 if __name__ == "__main__":
     spark = create_spark_session("Spark_Application_Name")
     for f in ['AMAZON.csv', 'APPLE.csv', 'FACEBOOK.csv', 'GOOGLE.csv',
@@ -125,3 +134,5 @@ if __name__ == "__main__":
         print(f"\n{f}:")
         df = load_data(spark, 'stocks_data/' + f)
         describe_data_frame(df)
+
+        month_mean(df).show()
