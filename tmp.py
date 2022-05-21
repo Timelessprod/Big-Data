@@ -7,7 +7,7 @@ from pyspark.ml.stat import Correlation
 from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.types import TimestampType, DoubleType, StringType, \
         StructField, StructType
-from pyspark.sql.functions import isnan, when, count, datediff, mean, lag
+from pyspark.sql.functions import isnan, when, count, datediff, mean, lag, col
 from pyspark.sql.window import Window
 
 
@@ -40,7 +40,7 @@ def count_nan(data_frame: DataFrame) -> DataFrame:
     Count nan in the <df> DataFrame
     """
     return data_frame.select([
-                count(when(isnan(c), c)).alias(c)
+                count(when(isnan(c) | col(c).isNull(), c)).alias(c)
                 for c
                 in ["High", "Low", "Open", "Close", "Volume", "Adj Close"]
               ])
