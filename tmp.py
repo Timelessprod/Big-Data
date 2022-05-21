@@ -114,9 +114,7 @@ def describe_data_frame(data_frame: DataFrame):
 
 if __name__ == "__main__":
     spark = create_spark_session("Spark_Application_Name")
-    for f in ['stocks_data/AMAZON.csv', 'stocks_data/APPLE.csv',
-    'stocks_data/FACEBOOK.csv', 'stocks_data/GOOGLE.csv',
-    'stocks_data/MICROSOFT.csv', 'stocks_data/TESLA.csv',
-    'stocks_data/ZOOM.csv']:
-        df = load_data(spark, f)
+    for f in ['AMAZON.csv', 'APPLE.csv', 'FACEBOOK.csv', 'GOOGLE.csv',
+            'MICROSOFT.csv', 'TESLA.csv', 'ZOOM.csv']:
+        df = load_data(spark, 'stocks_data/' + f)
         describe_data_frame(df)
