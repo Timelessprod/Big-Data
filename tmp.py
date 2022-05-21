@@ -151,6 +151,16 @@ def year_mean(data_frame: DataFrame) -> DataFrame:
                      .orderBy("Year")
 
 
+def change_day_to_day(df: DataFrame, col: str) -> DataFrame:
+    """
+    Add new column with comparaison between previous and next row value in collumn col
+    """
+    df = df.orderBy('Date')
+    return df.withColumn(col+"_change",
+                         lag(df[col], 1).over(Window.partitionBy("company_name").orderBy('Date')) - df[col]
+                         )
+
+
 if __name__ == "__main__":
     spark = create_spark_session("Spark_Application_Name")
     for f in ['AMAZON.csv', 'APPLE.csv', 'FACEBOOK.csv', 'GOOGLE.csv',
@@ -162,3 +172,5 @@ if __name__ == "__main__":
         week_mean(df).show()
         month_mean(df).show()
         year_mean(df).show()
+
+        df = change_day_to_day(df, 'Open')
