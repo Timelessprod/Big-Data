@@ -135,4 +135,5 @@ if __name__ == "__main__":
         print(f"\n{f}:")
         df = load_data(spark, 'stocks_data/' + f)
         df = change_day_to_day(df, 'Open')
+        df = change_day_to_day(df, 'Close')
         describe_data_frame(df)
