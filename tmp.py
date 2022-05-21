@@ -5,8 +5,8 @@ from pyspark.ml.linalg import DenseMatrix
 from pyspark.ml.feature import VectorAssembler
 from pyspark.ml.stat import Correlation
 from pyspark.sql import SparkSession, DataFrame
-from pyspark.sql.types import TimestampType, DoubleType, LongType, \
-        StringType, StructField, StructType
+from pyspark.sql.types import TimestampType, DoubleType, StringType, \
+        StructField, StructType
 from pyspark.sql.functions import isnan, when, count, datediff, mean, lag
 from pyspark.sql.window import Window
 
@@ -28,7 +28,7 @@ def load_data(spark_session: SparkSession, path: str) -> DataFrame:
         StructField("Low", DoubleType()),
         StructField("Open", DoubleType()),
         StructField("Close", DoubleType()),
-        StructField("Volume", LongType()),
+        StructField("Volume", DoubleType()),
         StructField("Adj Close", DoubleType()),
         StructField("company_name", StringType()),
     ])
@@ -114,5 +114,9 @@ def describe_data_frame(data_frame: DataFrame):
 
 if __name__ == "__main__":
     spark = create_spark_session("Spark_Application_Name")
-    df = load_data(spark, 'stocks_data/AMAZON.csv')
-    describe_data_frame(df)
+    for f in ['stocks_data/AMAZON.csv', 'stocks_data/APPLE.csv',
+    'stocks_data/FACEBOOK.csv', 'stocks_data/GOOGLE.csv',
+    'stocks_data/MICROSOFT.csv', 'stocks_data/TESLA.csv',
+    'stocks_data/ZOOM.csv']:
+        df = load_data(spark, f)
+        describe_data_frame(df)
