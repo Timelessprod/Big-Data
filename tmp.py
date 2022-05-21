@@ -46,13 +46,16 @@ def count_nan(data_frame: DataFrame) -> DataFrame:
               ])
 
 
-def duration_between_rows(df: DataFrame):
-    df = df.orderBy('Date')
-    df = df.withColumn('duration',
-                       datediff(df['Date'],
-                                lag(df['Date'], 1).over(Window.partitionBy("company_name").orderBy('Date')))
+def duration_between_rows(data_frame: DataFrame):
+    """
+    Calculate the mean duration between each rows
+    """
+    data_frame = data_frame.orderBy('Date')
+    data_frame = data_frame.withColumn('duration',
+                       datediff(data_frame['Date'],
+                                lag(data_frame['Date'], 1).over(Window.partitionBy("company_name").orderBy('Date')))
                        )
-    return df.select(mean('duration')).collect()[0][0]
+    return data_frame.select(mean('duration')).collect()[0][0]
 
 
 def corr_two_columns(data_frame: DataFrame, col1: str, col2: str) -> float:
@@ -79,23 +82,37 @@ def corr_matrix(data_frame: DataFrame) -> DenseMatrix:
     return matrix
 
 
-if __name__ == "__main__":
-    spark = create_spark_session("Spark_Application_Name")
-    df = load_data(spark, 'stocks_data/AMAZON.csv')
+def describe_data_frame(data_frame: DataFrame):
+    """
+    Describe the dataframe
+    - print the first and last 40 lines
+    - print the number of observations
+    - print the min, max, mean and standard deviation
+    - print the number of missing values for each dataframe and column
+    - print correlation matrix
+    """
+    data_frame.printSchema()
+    data_frame.show(40)
+    data_frame.count()
+    print(duration_between_rows(data_frame))
 
-    df.printSchema()
-    df.show(40)
-    df.count()
-    print(duration_between_rows(df))
+    print(data_frame.count())
 
     # Descriptive statistics for each dataframe and each column (min, max,
     # standard deviation)
-    df.describe().show()
+    data_frame.describe().show()
 
     # Number of missing values for each dataframe and column
-    count_nan(df).show()
+    count_nan(data_frame).show()
 
     # Correlation between values
-    pearsonCorr = corr_two_columns(df, "High", "Low")
-    corr = corr_matrix(df)
+    pearson_corr = corr_two_columns(data_frame, "High", "Low")
+    print(pearson_corr)
+    corr = corr_matrix(data_frame)
     print(corr)
+
+
+if __name__ == "__main__":
+    spark = create_spark_session("Spark_Application_Name")
+    df = load_data(spark, 'stocks_data/AMAZON.csv')
+    describe_data_frame(df)
