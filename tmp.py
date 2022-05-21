@@ -120,26 +120,35 @@ def describe_data_frame(data_frame: DataFrame):
 
 
 def week_mean(data_frame: DataFrame) -> DataFrame:
+    """
+    Return average of each week for columns Open and Close
+    """
     return data_frame.withColumn("Year", year("Date")) \
-            .withColumn("Week", weekofyear("Date")) \
-            .groupBy("Year", "Week") \
-            .avg("Open", "Close") \
-            .orderBy(["Year", "Week"])
+                     .withColumn("Week", weekofyear("Date")) \
+                     .groupBy("Year", "Week") \
+                     .avg("Open", "Close") \
+                     .orderBy(["Year", "Week"])
 
 
 def month_mean(data_frame: DataFrame) -> DataFrame:
+    """
+    Return average of each month for columns Open and Close
+    """
     return data_frame.withColumn("Year", year("Date")) \
-            .withColumn("Month", month("Date")) \
-            .groupBy("Year", "Month") \
-            .avg("Open", "Close") \
-            .orderBy(["Year", "Month"])
+                     .withColumn("Month", month("Date")) \
+                     .groupBy("Year", "Month") \
+                     .avg("Open", "Close") \
+                     .orderBy(["Year", "Month"])
 
 
 def year_mean(data_frame: DataFrame) -> DataFrame:
+    """
+    Return average of each year for columns Open and Close
+    """
     return data_frame.withColumn("Year", year("Date")) \
-            .groupBy("Year") \
-            .avg("Open", "Close") \
-            .orderBy("Year")
+                     .groupBy("Year") \
+                     .avg("Open", "Close") \
+                     .orderBy("Year")
 
 
 if __name__ == "__main__":
