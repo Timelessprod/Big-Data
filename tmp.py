@@ -8,7 +8,7 @@ from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.types import TimestampType, DoubleType, StringType, \
         StructField, StructType
 from pyspark.sql.functions import isnan, when, count, datediff, mean, lag, \
-        col, month, year
+        col, month, year, weekofyear
 from pyspark.sql.window import Window
 
 
@@ -119,6 +119,14 @@ def describe_data_frame(data_frame: DataFrame):
     print(corr, '\n')
 
 
+def week_mean(data_frame: DataFrame) -> DataFrame:
+    return data_frame.withColumn("Year", year("Date")) \
+            .withColumn("Week", weekofyear("Date")) \
+            .groupBy("Year", "Week") \
+            .avg("Open", "Close") \
+            .orderBy(["Year", "Week"])
+
+
 def month_mean(data_frame: DataFrame) -> DataFrame:
     return data_frame.withColumn("Year", year("Date")) \
             .withColumn("Month", month("Date")) \
@@ -127,12 +135,21 @@ def month_mean(data_frame: DataFrame) -> DataFrame:
             .orderBy(["Year", "Month"])
 
 
+def year_mean(data_frame: DataFrame) -> DataFrame:
+    return data_frame.withColumn("Year", year("Date")) \
+            .groupBy("Year") \
+            .avg("Open", "Close") \
+            .orderBy("Year")
+
+
 if __name__ == "__main__":
     spark = create_spark_session("Spark_Application_Name")
     for f in ['AMAZON.csv', 'APPLE.csv', 'FACEBOOK.csv', 'GOOGLE.csv',
             'MICROSOFT.csv', 'TESLA.csv', 'ZOOM.csv']:
         print(f"\n{f}:")
         df = load_data(spark, 'stocks_data/' + f)
-        describe_data_frame(df)
+        # describe_data_frame(df)
 
-        month_mean(df).show()
+        # week_mean(df).show()
+        # month_mean(df).show()
+        year_mean(df).show()
