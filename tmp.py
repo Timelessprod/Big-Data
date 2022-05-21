@@ -7,7 +7,8 @@ from pyspark.ml.stat import Correlation
 from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.types import TimestampType, DoubleType, StringType, \
         StructField, StructType
-from pyspark.sql.functions import isnan, when, count, datediff, mean, lag, col
+from pyspark.sql.functions import isnan, when, count, datediff, mean, lag, \
+        col, month, year, weekofyear
 from pyspark.sql.window import Window
 
 
@@ -118,6 +119,38 @@ def describe_data_frame(data_frame: DataFrame):
     print(corr, '\n')
 
 
+def week_mean(data_frame: DataFrame) -> DataFrame:
+    """
+    Return average of each week for columns Open and Close
+    """
+    return data_frame.withColumn("Year", year("Date")) \
+                     .withColumn("Week", weekofyear("Date")) \
+                     .groupBy("Year", "Week") \
+                     .avg("Open", "Close") \
+                     .orderBy(["Year", "Week"])
+
+
+def month_mean(data_frame: DataFrame) -> DataFrame:
+    """
+    Return average of each month for columns Open and Close
+    """
+    return data_frame.withColumn("Year", year("Date")) \
+                     .withColumn("Month", month("Date")) \
+                     .groupBy("Year", "Month") \
+                     .avg("Open", "Close") \
+                     .orderBy(["Year", "Month"])
+
+
+def year_mean(data_frame: DataFrame) -> DataFrame:
+    """
+    Return average of each year for columns Open and Close
+    """
+    return data_frame.withColumn("Year", year("Date")) \
+                     .groupBy("Year") \
+                     .avg("Open", "Close") \
+                     .orderBy("Year")
+
+
 def change_day_to_day(df: DataFrame, col: str) -> DataFrame:
     """
     Add new column with comparaison between previous and next row value in column col
@@ -134,6 +167,11 @@ if __name__ == "__main__":
             'MICROSOFT.csv', 'TESLA.csv', 'ZOOM.csv']:
         print(f"\n{f}:")
         df = load_data(spark, 'stocks_data/' + f)
+        # describe_data_frame(df)
+
+        week_mean(df).show()
+        month_mean(df).show()
+        year_mean(df).show()
+
         df = change_day_to_day(df, 'Open')
         df = change_day_to_day(df, 'Close')
-        describe_data_frame(df)
