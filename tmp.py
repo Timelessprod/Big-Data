@@ -120,7 +120,7 @@ def describe_data_frame(data_frame: DataFrame):
 
 def change_day_to_day(df: DataFrame, col: str) -> DataFrame:
     """
-    Add new column with comparaison between previous and next row value in collumn col
+    Add new column with comparaison between previous and next row value in column col
     """
     df = df.orderBy('Date')
     return df.withColumn(col+"_change",
