@@ -118,10 +118,21 @@ def describe_data_frame(data_frame: DataFrame):
     print(corr, '\n')
 
 
+def change_day_to_day(df: DataFrame, col: str) -> DataFrame:
+    """
+    Add new column with comparaison between previous and next row value in collumn col
+    """
+    df = df.orderBy('Date')
+    return df.withColumn(col+"_change",
+                         lag(df[col], 1).over(Window.partitionBy("company_name").orderBy('Date')) - df[col]
+                         )
+
+
 if __name__ == "__main__":
     spark = create_spark_session("Spark_Application_Name")
     for f in ['AMAZON.csv', 'APPLE.csv', 'FACEBOOK.csv', 'GOOGLE.csv',
             'MICROSOFT.csv', 'TESLA.csv', 'ZOOM.csv']:
         print(f"\n{f}:")
         df = load_data(spark, 'stocks_data/' + f)
+        df = change_day_to_day(df, 'Open')
         describe_data_frame(df)
