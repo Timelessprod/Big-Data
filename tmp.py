@@ -87,34 +87,41 @@ def describe_data_frame(data_frame: DataFrame):
     Describe the dataframe
     - print the first and last 40 lines
     - print the number of observations
+    - print the period between the data points
     - print the min, max, mean and standard deviation
     - print the number of missing values for each dataframe and column
     - print correlation matrix
     """
+    print("Dataframe schema:")
     data_frame.printSchema()
-    data_frame.show(40)
-    data_frame.count()
-    print(duration_between_rows(data_frame))
 
-    print(data_frame.count())
+    print("First 40 lines:")
+    data_frame.show(40)
+
+    print(f"Number of observations: {data_frame.count()}\n")
+
+    print("Period between data points:")
+    print(duration_between_rows(data_frame))
 
     # Descriptive statistics for each dataframe and each column (min, max,
     # standard deviation)
     data_frame.describe().show()
 
-    # Number of missing values for each dataframe and column
+    print("Number of missing values for each dataframe and column:")
     count_nan(data_frame).show()
 
-    # Correlation between values
+    print("Correlation between 'High' and 'Low':")
     pearson_corr = corr_two_columns(data_frame, "High", "Low")
     print(pearson_corr)
+    print("Correlation matrix:")
     corr = corr_matrix(data_frame)
-    print(corr)
+    print(corr, '\n')
 
 
 if __name__ == "__main__":
     spark = create_spark_session("Spark_Application_Name")
     for f in ['AMAZON.csv', 'APPLE.csv', 'FACEBOOK.csv', 'GOOGLE.csv',
             'MICROSOFT.csv', 'TESLA.csv', 'ZOOM.csv']:
+        print(f"\n{f}:")
         df = load_data(spark, 'stocks_data/' + f)
         describe_data_frame(df)
