@@ -174,3 +174,4 @@ if __name__ == "__main__":
         year_mean(df).show()
 
         df = change_day_to_day(df, 'Open')
+        df = change_day_to_day(df, 'Close')
