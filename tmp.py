@@ -159,6 +159,6 @@ if __name__ == "__main__":
         df = load_data(spark, 'stocks_data/' + f)
         # describe_data_frame(df)
 
-        # week_mean(df).show()
-        # month_mean(df).show()
+        week_mean(df).show()
+        month_mean(df).show()
         year_mean(df).show()
