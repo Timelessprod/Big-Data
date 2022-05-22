@@ -61,13 +61,6 @@ def duration_between_rows(data_frame: DataFrame):
     return data_frame.select(mean('duration')).collect()[0][0]
 
 
-def corr_two_columns(data_frame: DataFrame, col1: str, col2: str) -> float:
-    """
-    Return the correlation between two columns of the dataframe
-    """
-    return data_frame.stat.corr(col1, col2)
-
-
 def corr_matrix(data_frame: DataFrame) -> DenseMatrix:
     """
     Return the correlation matrix of a dataframe
@@ -83,6 +76,17 @@ def corr_matrix(data_frame: DataFrame) -> DenseMatrix:
     matrix = Correlation.corr(df_vector, vector_col).collect()[0][0]
 
     return matrix
+
+
+def plot_corr_matrix(matrix):
+    """
+    Plot the correlation matrix
+    """
+    fig, ax = plt.subplots(figsize=(10, 10))
+    ax.matshow(matrix, cmap=plt.cm.Blues, vmin=-1, vmax=1)
+    for (i, j), z in np.ndenumerate(matrix):
+        ax.text(j, i, '{:0.2f}'.format(z), ha='center', va='center')
+    plt.show()
 
 
 def describe_data_frame(data_frame: DataFrame):
@@ -114,7 +118,7 @@ def describe_data_frame(data_frame: DataFrame):
     count_nan(data_frame).show()
 
     print("Correlation between 'High' and 'Low':")
-    pearson_corr = corr_two_columns(data_frame, "High", "Low")
+    pearson_corr = data_frame.stat.corr('High', 'Low')
     print(pearson_corr)
     print("Correlation matrix:")
     corr = corr_matrix(data_frame)
