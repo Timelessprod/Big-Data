@@ -204,6 +204,24 @@ def candle_sticks(data, Month: int, Year: int, saveoption: bool = None):
     plt.show()
 
 
+def correlate_two_dataframe(
+        df1:DataFrame,
+        df2:DataFrame,
+        col_in_df1:str,
+        col_in_df2:str = None) -> float:
+    """
+    by default, col_in_df2 is equal to col_in_df1
+    """
+    if col_in_df2 is None:
+        col_in_df2 = col_in_df1
+    if col_in_df1 == col_in_df2:
+        col_in_df2 = f'{col_in_df1}_2'
+        df2 = df2.withColumnRenamed(col_in_df1, col_in_df2)
+
+    df = df1.join(df2, 'Date', 'inner').select(col_in_df1, col_in_df2)
+    return corr_two_columns(df, col_in_df1, col_in_df2)
+
+
 if __name__ == "__main__":
     spark = create_spark_session("Spark_Application_Name")
     dfs = []
@@ -221,3 +239,5 @@ if __name__ == "__main__":
 
         df = change_day_to_day(df, 'Open')
         df = change_day_to_day(df, 'Close')
+
+    print(correlate_two_dataframe(dfs[0], dfs[1], 'Open'))
