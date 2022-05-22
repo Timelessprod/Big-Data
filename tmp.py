@@ -6,10 +6,11 @@ from pyspark.ml.feature import VectorAssembler
 from pyspark.ml.stat import Correlation
 from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.types import TimestampType, DoubleType, StringType, \
-        StructField, StructType
+    StructField, StructType
 from pyspark.sql.functions import isnan, when, count, datediff, mean, lag, \
-        col, month, year, weekofyear
+    col, month, year, weekofyear, date_format, dayofmonth
 from pyspark.sql.window import Window
+import matplotlib as plt
 
 
 def create_spark_session(name: str) -> SparkSession:
@@ -41,10 +42,10 @@ def count_nan(data_frame: DataFrame) -> DataFrame:
     Count nan in the <df> DataFrame
     """
     return data_frame.select([
-                count(when(isnan(c) | col(c).isNull(), c)).alias(c)
-                for c
-                in ["High", "Low", "Open", "Close", "Volume", "Adj Close"]
-              ])
+        count(when(isnan(c) | col(c).isNull(), c)).alias(c)
+        for c
+        in ["High", "Low", "Open", "Close", "Volume", "Adj Close"]
+    ])
 
 
 def duration_between_rows(data_frame: DataFrame):
@@ -53,9 +54,10 @@ def duration_between_rows(data_frame: DataFrame):
     """
     data_frame = data_frame.orderBy('Date')
     data_frame = data_frame.withColumn('duration',
-                       datediff(data_frame['Date'],
-                                lag(data_frame['Date'], 1).over(Window.partitionBy("company_name").orderBy('Date')))
-                       )
+                                       datediff(data_frame['Date'],
+                                                lag(data_frame['Date'], 1).over(
+                                                    Window.partitionBy("company_name").orderBy('Date')))
+                                       )
     return data_frame.select(mean('duration')).collect()[0][0]
 
 
@@ -73,8 +75,8 @@ def corr_matrix(data_frame: DataFrame) -> DenseMatrix:
 
     vector_col = "corr_features"
     assembler = VectorAssembler(
-            inputCols=["High", "Low", "Open", "Close", "Volume", "Adj Close"],
-            outputCol=vector_col
+        inputCols=["High", "Low", "Open", "Close", "Volume", "Adj Close"],
+        outputCol=vector_col
     )
     df_vector = assembler.transform(data_frame).select(vector_col)
 
@@ -124,10 +126,10 @@ def week_mean(data_frame: DataFrame) -> DataFrame:
     Return average of each week for columns Open and Close
     """
     return data_frame.withColumn("Year", year("Date")) \
-                     .withColumn("Week", weekofyear("Date")) \
-                     .groupBy("Year", "Week") \
-                     .avg("Open", "Close") \
-                     .orderBy(["Year", "Week"])
+        .withColumn("Week", weekofyear("Date")) \
+        .groupBy("Year", "Week") \
+        .avg("Open", "Close") \
+        .orderBy(["Year", "Week"])
 
 
 def month_mean(data_frame: DataFrame) -> DataFrame:
@@ -135,10 +137,10 @@ def month_mean(data_frame: DataFrame) -> DataFrame:
     Return average of each month for columns Open and Close
     """
     return data_frame.withColumn("Year", year("Date")) \
-                     .withColumn("Month", month("Date")) \
-                     .groupBy("Year", "Month") \
-                     .avg("Open", "Close") \
-                     .orderBy(["Year", "Month"])
+        .withColumn("Month", month("Date")) \
+        .groupBy("Year", "Month") \
+        .avg("Open", "Close") \
+        .orderBy(["Year", "Month"])
 
 
 def year_mean(data_frame: DataFrame) -> DataFrame:
@@ -146,9 +148,9 @@ def year_mean(data_frame: DataFrame) -> DataFrame:
     Return average of each year for columns Open and Close
     """
     return data_frame.withColumn("Year", year("Date")) \
-                     .groupBy("Year") \
-                     .avg("Open", "Close") \
-                     .orderBy("Year")
+        .groupBy("Year") \
+        .avg("Open", "Close") \
+        .orderBy("Year")
 
 
 def change_day_to_day(df: DataFrame, col: str) -> DataFrame:
@@ -156,15 +158,57 @@ def change_day_to_day(df: DataFrame, col: str) -> DataFrame:
     Add new column with comparaison between previous and next row value in column col
     """
     df = df.orderBy('Date')
-    return df.withColumn(col+"_change",
+    return df.withColumn(col + "_change",
                          lag(df[col], 1).over(Window.partitionBy("company_name").orderBy('Date')) - df[col]
                          )
 
 
+def candle_sticks(data, Month: int, Year: int, saveoption: bool = None):
+    """
+    data : pyspark dataframe
+    month : number related to the focus month
+    year : number related to the focus year
+    saveoption : save the figure into a file "month_year.png"
+    """
+    data = data.withColumn('monthandday', date_format(data.Date, "d MMM"))
+    data = data.withColumn('day', dayofmonth(data.Date))
+    data = data.withColumn('month', month(data.Date))
+    data = data.withColumn('year', year(data.Date))
+
+    data = data.filter(data.month == Month).filter(data.year == Year)
+    pd_am = data.toPandas()
+    pd_am.index = pd_am.Date
+    pd_am = pd_am.drop(columns="Date")
+    up = pd_am[pd_am.Close >= pd_am.Open]
+    down = pd_am[pd_am.Close < pd_am.Open]
+
+    heigh = 0.1
+    width = 0.5
+
+    plt.figure(figsize=(9, 7))
+    plt.title("CandleStick Chart")
+
+    plt.bar(up.monthandday, up.Close - up.Open, width, bottom=up.Open, color='green')
+    plt.bar(up.monthandday, up.High - up.Close, heigh, bottom=up.Close, color='green')
+    plt.bar(up.monthandday, up.Low - up.Open, heigh, bottom=up.Open, color='green')
+
+    plt.bar(down.monthandday, down.Close - down.Open, width, bottom=down.Open, color='red')
+    plt.bar(down.monthandday, down.High - down.Open, heigh, bottom=down.Open, color='red')
+    plt.bar(down.monthandday, down.Low - down.Close, heigh, bottom=down.Close, color='red')
+
+    plt.xticks(rotation=45, ha='right')
+    plt.legend(["green", "red"])
+    if saveoption:
+        sgd = str(Month) + '_' + str(Year)
+        plt.savefig(sgd)
+    plt.show()
+
+
 if __name__ == "__main__":
     spark = create_spark_session("Spark_Application_Name")
+    dfs = []
     for f in ['AMAZON.csv', 'APPLE.csv', 'FACEBOOK.csv', 'GOOGLE.csv',
-            'MICROSOFT.csv', 'TESLA.csv', 'ZOOM.csv']:
+              'MICROSOFT.csv', 'TESLA.csv', 'ZOOM.csv']:
         print(f"\n{f}:")
         df = load_data(spark, 'stocks_data/' + f)
         # describe_data_frame(df)
@@ -172,6 +216,8 @@ if __name__ == "__main__":
         week_mean(df).show()
         month_mean(df).show()
         year_mean(df).show()
+
+        dfs.append(df)
 
         df = change_day_to_day(df, 'Open')
         df = change_day_to_day(df, 'Close')
