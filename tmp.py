@@ -103,6 +103,30 @@ def compute_momentum(stock_history: DataFrame, n: int = 5) -> DataFrame:
     return stock_history.withColumn("daily_momentum", avg(stock_history["Close"]).over(ordered_window))
 
 
+def upside_downside_ratio(stocks: list[DataFrame]) -> DataFrame:
+    curated_stocks = []
+    for i, stock in enumerate(stocks):
+        stock_w_advancements = stock.withColumn(f"advancement_{i}", (stock["Close"] - stock["Open"]) * stock["Volume"])
+        advancements_only = stock_w_advancements.select("Date", f"advancement_{i}")
+        curated_stocks.append(advancements_only)
+
+    all_joined = curated_stocks[0]
+    for df_next in curated_stocks[1:]:
+        all_joined = all_joined.join(df_next, on='Date', how='inner')
+
+    def gen_pos(frame: DataFrame, pred: callable):
+        res = all_joined["advancement_0"] * (all_joined["advancement_0"] > 0).cast("double")
+        for index in range(len(stocks) - 1):
+            res += all_joined[f"advancement_{index + 1}"] * (pred(all_joined[f"advancement_{index+1}"])).cast("double")
+        return res
+
+    out = all_joined.withColumn("total_upside", gen_pos(all_joined, lambda x: x > 0))
+    out = out.withColumn("total_downside", gen_pos(out, lambda x: x < 0))
+    out = out.withColumn("upside_downside_ratio", out["total_upside"] / out["total_downside"])
+    out = out.select("Date", "upside_downside_ratio")
+    return out
+
+
 def describe_data_frame(data_frame: DataFrame):
     """
     Describe the dataframe
@@ -152,8 +176,12 @@ def describe_data_frame(data_frame: DataFrame):
 
 if __name__ == "__main__":
     spark = create_spark_session("Spark_Application_Name")
+    all_datasets = []
     for f in ['AMAZON.csv', 'APPLE.csv', 'FACEBOOK.csv', 'GOOGLE.csv',
               'MICROSOFT.csv', 'TESLA.csv', 'ZOOM.csv']:
         print(f"\n{f}:")
         df = load_data(spark, 'stocks_data/' + f)
+        all_datasets.append(df)
         describe_data_frame(df)
+    print("upside_downside_ratio")
+    upside_downside_ratio(all_datasets).show()
