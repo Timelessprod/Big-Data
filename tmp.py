@@ -235,7 +235,7 @@ def correlate_two_dataframe(
         df2 = df2.withColumnRenamed(col_in_df1, col_in_df2)
 
     df = df1.join(df2, 'Date', 'inner').select(col_in_df1, col_in_df2)
-    return corr_two_columns(df, col_in_df1, col_in_df2)
+    return df.stat.corr(col_in_df1, col_in_df2)
 
 
 if __name__ == "__main__":
