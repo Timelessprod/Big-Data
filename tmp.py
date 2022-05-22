@@ -163,6 +163,22 @@ def change_day_to_day(df: DataFrame, col: str) -> DataFrame:
                          )
 
 
+def change_month_to_month(df: DataFrame, col_name: str) -> DataFrame:
+    """
+    Add new column with comparaison between previous and next month in column <col>
+    """
+    return df.withColumn("Year", year("Date")) \
+        .withColumn("Month", month("Date")) \
+        .groupBy("Year", "Month") \
+        .avg(col_name) \
+        .orderBy(["Year", "Month"]) \
+        .withColumnRenamed(f'avg({col_name})', col_name) \
+        .withColumn(col_name + "_change",
+                         col(col_name) - lag(col(col_name),
+                             1).over(Window.orderBy(["Year", "Month"]))
+                         )
+
+
 def candle_sticks(data, Month: int, Year: int, saveoption: bool = None):
     """
     data : pyspark dataframe
@@ -239,5 +255,6 @@ if __name__ == "__main__":
 
         df = change_day_to_day(df, 'Open')
         df = change_day_to_day(df, 'Close')
+        change_month_to_month(df, 'Open').show()
 
     print(correlate_two_dataframe(dfs[0], dfs[1], 'Open'))
