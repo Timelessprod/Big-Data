@@ -11,6 +11,7 @@ from pyspark.sql.functions import isnan, when, count, datediff, mean, lag, \
     col, month, year, weekofyear, date_format, dayofmonth
 from pyspark.sql.window import Window
 import matplotlib as plt
+import numpy as np
 
 
 def create_spark_session(name: str) -> SparkSession:
@@ -87,43 +88,6 @@ def plot_corr_matrix(matrix):
     for (i, j), z in np.ndenumerate(matrix):
         ax.text(j, i, '{:0.2f}'.format(z), ha='center', va='center')
     plt.show()
-
-
-def describe_data_frame(data_frame: DataFrame):
-    """
-    Describe the dataframe
-    - print the first and last 40 lines
-    - print the number of observations
-    - print the period between the data points
-    - print the min, max, mean and standard deviation
-    - print the number of missing values for each dataframe and column
-    - print correlation matrix
-    """
-    print("Dataframe schema:")
-    data_frame.printSchema()
-
-    print("First 40 lines:")
-    data_frame.show(40)
-
-    print(f"Number of observations: {data_frame.count()}\n")
-
-    print("Period between data points:")
-    print(duration_between_rows(data_frame))
-
-    # Descriptive statistics for each dataframe and each column (min, max,
-    # standard deviation)
-    data_frame.describe().show()
-
-    print("Number of missing values for each dataframe and column:")
-    count_nan(data_frame).show()
-
-    print("Correlation between 'High' and 'Low':")
-    pearson_corr = data_frame.stat.corr('High', 'Low')
-    print(pearson_corr)
-    plot_corr_matrix(pearson_corr.toArray())
-    print("Correlation matrix:")
-    corr = corr_matrix(data_frame)
-    print(corr, '\n')
 
 
 def week_mean(data_frame: DataFrame) -> DataFrame:
@@ -241,6 +205,54 @@ def correlate_two_dataframe(
 
     df = df1.join(df2, 'Date', 'inner').select(col_in_df1, col_in_df2)
     return df.stat.corr(col_in_df1, col_in_df2)
+
+
+def relative_strength_index(df: DataFrame) -> DataFrame:
+    """
+    Add new column with relative strength index
+    """
+    return df.withColumn("rsi", 100 - 100 / (1 + max(df.Close - df.Open, 0) / (df.Open - df.Close)))
+
+
+def describe_data_frame(data_frame: DataFrame):
+    """
+    Describe the dataframe
+    - print the first and last 40 lines
+    - print the number of observations
+    - print the period between the data points
+    - print the min, max, mean and standard deviation
+    - print the number of missing values for each dataframe and column
+    - print correlation matrix
+    """
+    print("Dataframe schema:")
+    data_frame.printSchema()
+
+    print("First 40 lines:")
+    data_frame.show(40)
+
+    print(f"Number of observations: {data_frame.count()}\n")
+
+    print("Period between data points:")
+    print(duration_between_rows(data_frame))
+
+    # Descriptive statistics for each dataframe and each column (min, max,
+    # standard deviation)
+    data_frame.describe().show()
+
+    print("Number of missing values for each dataframe and column:")
+    count_nan(data_frame).show()
+
+    print("Correlation between 'High' and 'Low':")
+    pearson_corr = data_frame.stat.corr('High', 'Low')
+    print(pearson_corr)
+    plot_corr_matrix(pearson_corr.toArray())
+    print("Correlation matrix:")
+    corr = corr_matrix(data_frame)
+    print(corr, '\n')
+
+    print("RSI")
+    data_frame = relative_strength_index(data_frame)
+    print(data_frame.select("rsi").describe())
 
 
 if __name__ == "__main__":
