@@ -120,6 +120,7 @@ def describe_data_frame(data_frame: DataFrame):
     print("Correlation between 'High' and 'Low':")
     pearson_corr = data_frame.stat.corr('High', 'Low')
     print(pearson_corr)
+    plot_corr_matrix(pearson_corr.toArray())
     print("Correlation matrix:")
     corr = corr_matrix(data_frame)
     print(corr, '\n')
