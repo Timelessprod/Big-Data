@@ -19,9 +19,9 @@ python3 -m pip install -r requirements.txt
 
 ## Exploration
 
-The file [exploration](./exploration.ipynb) contain the first part and the insights of the
-project.
+The file [exploration](./exploration.ipynb) contain the first part and the
+insights of the project.
 
 ## Prediction
 
-The file `prediction.ipynb` contain our results using spark ml.
+The file [prediction](./prediction.ipynb) contain our results using spark ml.
