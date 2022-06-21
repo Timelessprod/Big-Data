@@ -19,7 +19,7 @@ python3 -m pip install -r requirements.txt
 
 ## Exploration
 
-The file `exploration.ipynb` contain the first part and the insights of the
+The file [exploration](./exploration.ipynb) contain the first part and the insights of the
 project.
 
 ## Prediction
